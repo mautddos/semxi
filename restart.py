@@ -23,11 +23,12 @@ BOT_TOKEN = "7683433576:AAFGuDfoFo4Q6cvvlWBk9QTCGwPbAGRfX-k"
 USER_ID = "8167507955"
 APP_PORT = 8080  # Flask port
 
-# Global variables
-app = Flask(__name__)
+# Initialize global variables at the top
 current_process = None
 start_time = time.time()
 command_lock = threading.Lock()
+
+app = Flask(__name__)
 
 def send_telegram(text, parse_mode="Markdown"):
     try:
@@ -141,15 +142,12 @@ def stop_script(process):
         send_telegram(f"❌ Stop failed: {str(e)}")
 
 def restart_bot():
+    global current_process
     with command_lock:
         send_telegram("🔄 Starting restart process...")
         stop_script(current_process)
         pull_latest()
-        new_process = run_script()
-        
-        global current_process
-        current_process = new_process
-        
+        current_process = run_script()
         send_telegram("✅ Restart completed")
         send_log_tail(10, "Post-Restart Logs")
 
@@ -184,7 +182,6 @@ def run_flask():
             if chat_id != USER_ID:
                 return jsonify({"status": "unauthorized"})
             
-            # Process commands
             if text == "/start":
                 response = (
                     "🤖 *Bot Control Panel* 🤖\n\n"
@@ -226,7 +223,6 @@ def run_flask():
             print(f"Webhook error: {e}")
             return jsonify({"status": "error", "details": str(e)})
 
-    # Start Flask with better configuration
     app.run(
         host="0.0.0.0",
         port=APP_PORT,
@@ -235,10 +231,11 @@ def run_flask():
     )
 
 def main():
-    global current_process
+    global current_process, start_time
     
     # Initial setup
     setup()
+    start_time = time.time()
     
     # Start background services
     threading.Thread(target=monitor_uptime, daemon=True).start()
