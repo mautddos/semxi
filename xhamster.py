@@ -33,6 +33,7 @@ client = TelegramClient(StringSession(), API_ID, API_HASH)
 BOT_START_TIME = time.time()
 
 # Video upload queue system
+# Video upload queue system
 upload_queue = deque()
 queue_lock = threading.Lock()
 is_processing = False
@@ -51,6 +52,29 @@ loop.run_until_complete(start_telethon())
 
 executor = ThreadPoolExecutor(max_workers=4)
 video_data_cache = {}  # Store per-user quality options
+
+# Supported domains
+SUPPORTED_DOMAINS = [
+    "xhamster.com", "xvideos.com", "pornhub.org", "xnxx.com", "pornhub.com", "youporn.com",
+    "xxxymovies.com", "tnaflix.com", "redtube.com", "porntube.com", "playvids.com", "moviefap.com",
+    "lovehomeporn.com", "iwara.tv", "hellporno.com", "eroprofile.com", "eporner.com", "empflix.com",
+    "beeg.com", "adultswim.com", "91porn.com", "4tube.com", "tiktok.com", "youtube.com", "twitter.com",
+    "x.com", "instagram.com", "threads.net", "facebook.com", "snapchat.com", "telegram.org", "vimeo.com",
+    "tumblr.com", "reddit.com", "twitch.tv", "vk.com", "9gag.com", "bilibili.com", "bitchute.com",
+    "blogger.com", "buzzfeed.com", "capcut.com", "chingari.io", "dailymotion.com", "douyin.com",
+    "febspot.com", "flickr.com", "ifunny.co", "imgur.com", "izlesene.com", "kwai.com", "lemon8-app.com",
+    "likee.video", "linkedin.com", "loom.com", "mashable.com", "mastodon.social", "medal.tv", "mojapp.in",
+    "mxtakatak.com", "ok.ru", "pinterest.com", "rumble.com", "sharechat.com", "streamable.com",
+    "substack.com", "ted.com", "zhihu.com", "worldstarhiphop.com", "vidlii.com", "arnes.si", "videa.hu",
+    "vbox7.com", "thisoldhouse.com", "teamtreehouse.com", "store.steampowered.com", "pearvideo.com",
+    "nowness.com", "newgrounds.com", "nationalgeographic.com", "media.ccc.de", "manyvids.com",
+    "livestream.com", "kinja.com", "kotaku.com", "jove.com", "indavideo.hu", "glide.me", "coub.com",
+    "chilloutzone.de", "archive.org", "sooplive.com", "8tracks.com", "3qsdn.com", "twentythree.net"
+]
+
+# URL validator
+def is_valid_url(url):
+    return any(domain in url for domain in SUPPORTED_DOMAINS)
 
 def process_queue():
     global is_processing, total_uploads
@@ -79,33 +103,37 @@ def add_to_queue(message, video_url, quality_label):
             is_processing = True
             executor.submit(process_queue)
 
-# Extract slug
-def extract_slug(url):
-    match = re.search(r"xhamster\.com\/videos\/([^\/]+)", url)
-    return match.group(1) if match else None
-
-# Get video options
-def get_video_options(xh_url):
-    slug = extract_slug(xh_url)
-    if not slug:
+# New universal get_video_options
+def get_video_options(video_url):
+    if not is_valid_url(video_url):
+        print("❌ Unsupported URL. Only specific video sites are allowed.")
         return None, None, []
 
-    encoded_url = urllib.parse.quote(f"https://xhamster.com/videos/{slug}")
+    encoded_url = urllib.parse.quote(video_url)
     api_url = f"https://vkrdownloader.xyz/server/?api_key=vkrdownloader&vkr={encoded_url}"
 
     try:
         res = requests.get(api_url)
         data = res.json().get("data", {})
-        title = data.get("title", "xHamster Video")
+        title = data.get("title", "Video")
         thumbnail = data.get("thumbnail", "")
         downloads = data.get("downloads", [])
 
         options = sorted(
-            [d for d in downloads if d.get("url", "").endswith(".mp4")],
-            key=lambda x: int(re.search(r"(\d+)p", x.get("format_id", "0p")).group(1)),
+            [
+                {
+                    "url": d.get("url"),
+                    "format_id": d.get("format_id") or "Unknown",
+                    "size": d.get("size") or "Unknown"
+                }
+                for d in downloads if d.get("ext") == "mp4" and d.get("url")
+            ],
+            key=lambda x: int(re.search(r"(\d+)p", x["format_id"] or "0p").group(1)) if re.search(r"(\d+)p", x["format_id"] or "") else 0,
             reverse=True
         )
+
         return title, thumbnail, options
+
     except Exception as e:
         print("API error:", e)
         return None, None, []
@@ -519,4 +547,3 @@ def handle_other_messages(msg):
 # Start bot
 print("🚀 Advanced XHamster Downloader Bot is running...")
 bot.polling(none_stop=True, interval=0)
-
