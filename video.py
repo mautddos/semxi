@@ -16,7 +16,7 @@ from telegram.ext import (
 # Configuration
 BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8010650541:AAHONdzGtPgsKtDn772yhMCxV-ukWzHTyrQ')
 CHANNEL_ID = -1002441094491  # Channel where videos are stored
-VERIFICATION_CHANNEL_ID = -1001973904304  # Channel users must join
+VERIFICATION_CHANNEL_ID = -1001973904304 # List of channel IDs  # Channel users must join
   # Without @ symbol
 ADMIN_IDS = {8167507955}  # Admin user IDs
 DELETE_AFTER_SECONDS = 14400  # Auto-delete messages after 2 minutes
@@ -129,7 +129,8 @@ Please join our channel first to use this bot:
     keyboard = [
     [
         InlineKeyboardButton("Join Channel", url="https://t.me/+kC_WnpSy-icyNmI1"),
-        InlineKeyboardButton("Join Channel", url="https://t.me/+ZyYHoZg-qL0zN2Nl")
+        InlineKeyboardButton("Join Channel", url="https://t.me/+ZyYHoZg-qL0zN2Nl"),
+        InlineKeyboardButton("Join Channel", url="https://t.me/DARKMETHODHUB")
     ],
         [InlineKeyboardButton("✅ I've Joined", callback_data='check_join')]
     ]
@@ -174,7 +175,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 await query.edit_message_text(text="Please join the channel first to access videos.")
         except Exception as e:
             logger.error(f"Error checking membership: {e}")
-            await query.edit_message_text(text="Couldn't verify your channel membership. Please try again.")
+            await query.edit_message_text(text="Couldn't verify your channel membership. Please try again /start.")
     
     elif query.data == 'videos':
         user_progress[user_id]['last_sent'] = 0
