@@ -22,7 +22,7 @@ from tqdm import tqdm
 import humanize
 
 # Telegram credentials
-BOT_TOKEN = "7602913380:AAFF3gJ1f4aCw1k2nhdKAoMquj3aSIDiPXk"
+BOT_TOKEN = "7650537922:AAGta4leTKEntU7XwT6xee-cP7UPqedfnsA"
 API_ID = 22625636
 API_HASH = "f71778a6e1e102f33ccc4aee3b5cc697"
 
